@@ -1,11 +1,17 @@
 const FETCH_REQUEST = 'grid-data/FETCH-REQUEST';
 const FETCH_SUCCESS = 'grid-data/FETCH-SUCCESS';
 const FETCH_FAILURE = 'grid-data/FETCH-FAILURE';
+const SET_FILTER = 'grid-data/SET_FILTER';
+const CLEAR_FILTER = 'grid-data/CLEAR_FILTER';
 
 const initialState = {
   isFetching: false,
   error: '',
   data: [],
+  filters: {
+    product: '',
+    price: '',
+  }
 }
 
 export default function reducer(state = initialState, action) {
@@ -17,7 +23,6 @@ export default function reducer(state = initialState, action) {
         error: '',
       }
     case FETCH_SUCCESS:
-      console.log(action.response);
       return {
         ...state,
         isFetching: false,
@@ -30,6 +35,24 @@ export default function reducer(state = initialState, action) {
         isFetching: false,
         error: action.error,
       }
+    case SET_FILTER: {
+      return {
+        ...state,
+        isFetching: false,
+        error: '',
+        filters: {
+          ...action.response
+        }
+      }
+    }
+    case CLEAR_FILTER: {
+      return {
+        ...state,
+        isFetching: false,
+        error: '',
+        filters: initialState.filters,
+      }
+    }
     default:
       return state;
   }
