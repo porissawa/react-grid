@@ -23,6 +23,7 @@ const Home = () => {
   let finalIndex = initArrLength;
 
   let expanderTopPadding = '0px';
+  let expanderBottomPadding = '0px';
   let rowElementHeight = 30; //px
 
   let topSentinelPreviousY = 0;
@@ -30,8 +31,10 @@ const Home = () => {
 
   const [currArr, setCurrArr] = useState([]);
   const nextArr = useRef(null);
-  const removalCounter = useRef(0);
+  const concatedArr = useRef(null); // using for debugging
+  const lastInitIndex = useRef(0);
   const expander = useRef(null);
+  const removalCounter = useRef(0);
 
   useEffect(() => {
     dispatch(fetchData())
@@ -43,57 +46,89 @@ const Home = () => {
     createIntersectionObserver();
     expander.current = document.getElementById('expander');
     //this effect depends exclusively on the data being loaded
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
-  // useEffect(() => {
-  //   shouldGetNewTopPadding(true);
-  // }, [])
+  useEffect(() => {
+    concatedArr.current = currArr;
+    // console.log('concatedArr', concatedArr.current)
+  })
 
   function sliceList(list, isBottom) {
     if (removalCounter.current === 0) {
       setCurrArr(arr => arr.concat(list));
     } else if (isBottom && initIndex >= 0) {
-      // remove unseen far away dom elements
+      // remove unseen topmost dom elements and append new items
       setCurrArr(arr => arr.slice(initArrLength, finalIndex).concat(list));
+    } else {
+      // preppend new items and remove unseen bottommost dom elements
+      setCurrArr(arr => list.concat(arr.slice(0, initArrLength)));
     }
   }
 
   // add top padding to #expander div
   function shouldGetNewPadding(isBottom) {
     if (isBottom) {
-      initIndex = finalIndex;
-      finalIndex = finalIndex + initArrLength;
-      console.log('isBottom', initIndex, finalIndex)
+      // since preppeding items steps in half the step appeding does,
+      // check if last move was a preppend
+      initIndex === lastInitIndex.current
+        ? initIndex = finalIndex + initArrLength
+        : initIndex = finalIndex;
+      finalIndex === lastInitIndex.current + initArrLength
+        ? finalIndex = finalIndex + initArrLength * 2
+        : finalIndex = finalIndex + initArrLength;
+
+      nextArr.current = data.slice(initIndex, finalIndex);
     } else {
-      initIndex = initIndex - initArrLength;
-      finalIndex = finalIndex - initArrLength;
-      console.log('not isBottom', initIndex, finalIndex)
+      // avoid slicing negative numbers from data array
+      initIndex = initIndex - initArrLength * 2 >= 0 ? initIndex - initArrLength * 2 : 0;
+      finalIndex = finalIndex - initArrLength * 2 >= initArrLength ? finalIndex - initArrLength * 2 : initArrLength;
+      console.log('not is bottom', initIndex, finalIndex);
+      lastInitIndex.current = initIndex;
     }
     
-    nextArr.current = data.slice(initIndex, finalIndex);
     const numberOfDataRows = document.getElementsByClassName('data-row').length;
 
     if (numberOfDataRows === initArrLength * 2) {
       removalCounter.current += 1;
       // add padding to top element
-      const currPadding = Number(expander.current.style.paddingTop.split('p')[0]);
+      const currPaddingTop = Number(expander.current.style.paddingTop.split('p')[0]);
+      const currPaddingBottom = Number(expander.current.style.paddingBottom.split('p')[0]);
       const newPadding = initArrLength * rowElementHeight;
-      expanderTopPadding = isBottom ? `${currPadding + newPadding}px` : `${currPadding - newPadding}px`;
-      expander.current.style.paddingTop = expanderTopPadding;
 
+      if (isBottom) {
+        expander.current.style.paddingBottom = currPaddingBottom === 0
+          ? '0px'
+          : `${currPaddingBottom - newPadding}px`;
+        expander.current.style.paddingTop = `${currPaddingTop + newPadding}px`;
+        
+      } else {
+        expander.current.style.paddingTop = currPaddingTop === 0
+          ? '0px'
+          : `${currPaddingTop - newPadding}px`
+        expander.current.style.paddingBottom = `${currPaddingBottom + newPadding}px`
+        
+      }
+      // expanderTopPadding = isBottom ? `${currPaddingTop + newPadding}px` : `${currPaddingTop - newPadding}px`;
+      // expanderBottomPadding = isBottom ? `${currPadding - newPadding}px` : `${currPadding + newPadding}px`;
+
+      // expander.current.style.paddingTop = expanderTopPadding;
+      // expander.current.style.paddingBottom = expanderBottomPadding;
+    } else {
+      removalCounter.current = 0;
     }
 
-    sliceList(nextArr.current, true);
+    isBottom ? sliceList(nextArr.current, isBottom) : sliceList(data.slice(initIndex, finalIndex), isBottom) ;
   }
 
   function bottomCallback(entry) {  
     const currentY = entry.boundingClientRect.y + window.pageYOffset;
     const isIntersecting = entry.isIntersecting;
+    
     if (currentY > bottomSentinelPreviousY && isIntersecting) {
       shouldGetNewPadding(true);
     }
-        
+    console.log('bottomCallback currentY', currentY);
     bottomSentinelPreviousY = currentY;
     topSentinelPreviousY = currentY;
   }
@@ -101,9 +136,12 @@ const Home = () => {
   function topCallback(entry) {
     const currentY = entry.boundingClientRect.y + window.pageYOffset;
     const isIntersecting = entry.isIntersecting;
+
     if (currentY < topSentinelPreviousY && isIntersecting) {
       shouldGetNewPadding(false);
     }
+
+    console.log('topCallback currentY', currentY);
     topSentinelPreviousY = currentY;
     bottomSentinelPreviousY = currentY;
   }
@@ -118,16 +156,15 @@ const Home = () => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           if (entry.target.className === 'bottom-observed') {
-
             bottomCallback(entry);
             // initialize top observer when user hits bottom observer
+            // to avoid triggering effect on page load
             return entries.find(el => el.target.className === 'top-observed')
               ? null
               : observer.observe(document.querySelector('.top-observed'));
-          }
-  
-          if (entry.target.className === 'top-observed') {
+          } else {
             topCallback(entry);
+
           }
         }
       })

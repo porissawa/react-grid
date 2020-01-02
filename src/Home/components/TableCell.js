@@ -7,7 +7,7 @@ import { colors } from '../../utils/styles';
 const Cell = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: center;;
+  justify-content: center;
   align-items: center;
   width: calc(100% / 6);
   min-width: 100px;
@@ -15,13 +15,14 @@ const Cell = styled.div`
   border: 1px solid ${colors.grayLight};
   font-size: 18px;
   background-color: ${colors.grayLighter};
-  /* overflow: hidden; */
+  white-space: nowrap;
+  overflow: hidden;
 `;
 
 function TableCell({className, text, onClick}) {
   return (
     <Cell className={className} onClick={onClick}>
-      <span>{text}</span>
+      {text}
     </Cell>
   )
 };
