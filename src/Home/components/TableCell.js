@@ -13,6 +13,7 @@ const Cell = styled.div`
   min-width: 100px;
   padding: 4px;
   border: 1px solid ${colors.grayLight};
+  font-family: 'Montserrat', sans-serif;
   font-size: 18px;
   background-color: ${colors.grayLighter};
   white-space: nowrap;

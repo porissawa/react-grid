@@ -8,6 +8,7 @@ const Container = styled.div`
   display: flex;
   width: 100%;
   height: ${props => props.isHeader ? '50px' : '30px'};
+  font-weight: ${props => props.isHeader ? 700 : 400};
 `;
 
 function Row({className, children, onClick, isHeader}) {

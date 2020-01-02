@@ -8,10 +8,7 @@ const initialState = {
   isFetching: false,
   error: '',
   data: [],
-  filters: {
-    product: '',
-    price: '',
-  }
+  filter: '',
 }
 
 export default function reducer(state = initialState, action) {
@@ -27,7 +24,7 @@ export default function reducer(state = initialState, action) {
         ...state,
         isFetching: false,
         error: '',
-        data: action.response,
+        data: action.response
       }
     case FETCH_FAILURE:
       return {
@@ -40,9 +37,7 @@ export default function reducer(state = initialState, action) {
         ...state,
         isFetching: false,
         error: '',
-        filters: {
-          ...action.response
-        }
+        filter: action.filter
       }
     }
     case CLEAR_FILTER: {
@@ -72,6 +67,13 @@ function fetchFailure(error) {
     type: FETCH_FAILURE,
     error,
   };
+}
+
+export function setFilter(filter) {
+  return {
+    type: SET_FILTER,
+    filter,
+  }
 }
 
 export function fetchData() {
