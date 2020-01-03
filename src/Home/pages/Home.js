@@ -105,6 +105,7 @@ const Home = () => {
 
   useEffect(() => {
     concatedArr.current = currArr;
+    console.log()
   })
 
   function resetPaddings() {
@@ -116,13 +117,13 @@ const Home = () => {
   }
 
   function removeObservers() {
-    expander.current.style.display = 'none';
-    expander.current.style.display = 'none';
+    document.querySelector('.top-observed').style.display = 'none';
+    document.querySelector('.bottom-observed').style.display = 'none';
   }
 
   function restoreObservers() {
-    expander.current.style.display = 'block';
-    expander.current.style.display = 'block';
+    document.querySelector('.top-observed').style.display = 'block';
+    document.querySelector('.bottom-observed').style.display = 'block';
   }
 
   function sliceList(list, isBottom, isFilter) {
