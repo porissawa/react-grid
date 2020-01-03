@@ -316,7 +316,7 @@ const Home = () => {
               ))}
           </MobileHeader>
           {currArr && currArr.map(obj => (
-            <Row key={obj.product.concat(obj.price)} className="data-row">
+            <Row key={obj.product.concat(Math.random())} className="data-row">
               <TableCell text={obj.product} />
               <TableCell text={obj.quantity} />
               <TableCell text={obj.price} />
