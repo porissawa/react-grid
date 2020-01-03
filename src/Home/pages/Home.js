@@ -14,26 +14,34 @@ const Header = styled.div`
   background-color: white;
   position: fixed;
   top: 0;
-
 `;
 
 const HeaderContent = styled.div`
-  position: sticky;
   margin: 10px auto 0 -10px;
   width: calc(100% - 16px);
-  top: 0;
   left: 0;
   right: 0;
   padding: 0 10px;
 `;
 
 const SSearchBar = styled(SearchBar)`
-  width: 70%;
+  width: calc(100% - 35px);
   margin-bottom: 10px;
 `;
 
 const Spacer = styled.div`
   height: 120px;
+  @media (max-width: 700px) {
+    height: 70px;
+  }
+`;
+
+const HeaderRow = styled(Row).attrs({
+  isHeader: true,
+})`
+  @media (max-width: 700px) {
+    display: none;
+  }
 `;
 
 // render
@@ -57,7 +65,7 @@ const Home = () => {
   const [query, setQuery] = useState('');
 
   const nextArr = useRef(null);
-  // const concatedArr = useRef(null); // using for debugging
+  const concatedArr = useRef(null); // using for debugging
   const expander = useRef(null);
   const removalCounter = useRef(0);
   const filtered = useRef(null);
@@ -77,19 +85,27 @@ const Home = () => {
   }, [data]);
 
   useEffect(() => {
-    if (filter !== '') {
+    if (filter.length !== 0) {
       filtered.current = data.filter(el => {
         return el.product.toLowerCase().includes(filter.toLowerCase())
           || el.origin.toLowerCase().includes(filter.toLowerCase());
         })
+      sliceList(filtered.current, false, true);
     } else {
-      filtered.current = data
+      filtered.current = data;
+      // guard against pre render call
+      expander.current && sliceList(filtered.current, false, true);
     }
-    filter && sliceList(filtered.current, false, true);
+    console.log(filtered.current)
+
     // including sliceList in the dependendy array would require a useCallback
     // which would trigger two functions instead of one, losing performance
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, data])
+
+  useEffect(() => {
+    concatedArr.current = currArr;
+  })
 
   function resetPaddings() {
     expander.current.style.paddingBottom = '0px';
@@ -100,23 +116,29 @@ const Home = () => {
   }
 
   function removeObservers() {
-    document.querySelector('.bottom-observed').style.display = 'none';
-    document.querySelector('.top-observed').style.display = 'none';
-  } 
+    expander.current.style.display = 'none';
+    expander.current.style.display = 'none';
+  }
+
+  function restoreObservers() {
+    expander.current.style.display = 'block';
+    expander.current.style.display = 'block';
+  }
 
   function sliceList(list, isBottom, isFilter) {
     const listLength = list.length;
-
+    console.log('entrou no slicelist')
     if (isFilter) {
       resetPaddings();
+      // reset scroll
+      window.scrollTo(0, 0);
       if (listLength <= initArrLength) {
-        console.log(initIndex, finalIndex)
+        console.log('listlength era menor que initArrLength')
         removeObservers();
-        console.log(list)
         setCurrArr(list.slice(initIndex, finalIndex));
       } else {
-        document.querySelector('.bottom-observed').style.display = 'block';
-        document.querySelector('.top-observed').style.display = 'block';
+        console.log('listlength era MAIOR que initArrLength', list.slice(0, initArrLength))
+        restoreObservers();
         setCurrArr(list.slice(0, initArrLength));
       }
       removalCounter.current = 0;
@@ -124,8 +146,10 @@ const Home = () => {
     }
 
     finalIndex = finalIndex >= listLength ? finalIndex : listLength;
-
-    if (removalCounter.current === 0) {
+    console.log('removalCounter.current', removalCounter.current)
+    console.log('concatedArr.current', concatedArr.current)
+    if (removalCounter.current === 0 && concatedArr.current && concatedArr.current.length < maxArrLength) {
+      console.log('entrou no arr.concat(list)')
       setCurrArr(arr => arr.concat(list));
     } else if (isBottom && initIndex >= 0) {
       // remove unseen topmost dom elements and append new items
@@ -195,7 +219,8 @@ const Home = () => {
     getNewIndexes(isBottom);
   }
 
-  function bottomCallback(entry) {  
+  function bottomCallback(entry) {
+    console.log('CHAMOUT BOTTOM CALLBACK');
     const currentY = entry.boundingClientRect.y + window.pageYOffset;
     const isIntersecting = entry.isIntersecting;
     
@@ -208,6 +233,7 @@ const Home = () => {
   }
 
   function topCallback(entry) {
+    console.log('CHAMOUT TOP CALLBACK');
     const currentY = entry.boundingClientRect.y + window.pageYOffset;
     const isIntersecting = entry.isIntersecting;
 
@@ -269,11 +295,11 @@ const Home = () => {
                 }}
               />
             </div>
-            <Row isHeader>
+            <HeaderRow>
               {Object.keys(data[0]).map(el => (
                 <TableCell text={el.toUpperCase()} key={el} />
               ))}
-            </Row>
+            </HeaderRow>
           </HeaderContent>
         </Header>
         <Spacer />
