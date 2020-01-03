@@ -33,8 +33,10 @@ const SSearchBar = styled(SearchBar)`
 `;
 
 const Spacer = styled.div`
-  height: 130px;
+  height: 120px;
 `;
+
+// render
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -56,10 +58,10 @@ const Home = () => {
 
   const nextArr = useRef(null);
   // const concatedArr = useRef(null); // using for debugging
-  const lastInitIndex = useRef(0);
   const expander = useRef(null);
   const removalCounter = useRef(0);
   const filtered = useRef(null);
+  const lastMoveWasBottom = useRef(true);
 
   useEffect(() => {
     dispatch(fetchData())
@@ -70,8 +72,7 @@ const Home = () => {
     filtered.current = data;
     sliceList(nextArr.current);
     createIntersectionObserver();
-    expander.current = document.getElementById('expander');
-    //this effect depends exclusively on the data being loaded
+    // this effect depends exclusively on the data being loaded
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
@@ -85,15 +86,23 @@ const Home = () => {
       filtered.current = data
     }
     filter && sliceList(filtered.current, false, true);
+    // including sliceList in the dependendy array would require a useCallback
+    // which would trigger two functions instead of one, losing performance
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, data])
 
   function resetPaddings() {
     expander.current.style.paddingBottom = '0px';
     expander.current.style.paddingTop = '0px';
-    topSentinelPreviousY = 0
-    bottomSentinelPreviousY = 0
-    return
+    topSentinelPreviousY = 0;
+    bottomSentinelPreviousY = 0;
+    return;
   }
+
+  function removeObservers() {
+    document.querySelector('.bottom-observed').style.display = 'none';
+    document.querySelector('.top-observed').style.display = 'none';
+  } 
 
   function sliceList(list, isBottom, isFilter) {
     const listLength = list.length;
@@ -101,8 +110,9 @@ const Home = () => {
     if (isFilter) {
       resetPaddings();
       if (listLength <= initArrLength) {
-        document.querySelector('.bottom-observed').style.display = 'none';
-        document.querySelector('.top-observed').style.display = 'none';
+        console.log(initIndex, finalIndex)
+        removeObservers();
+        console.log(list)
         setCurrArr(list.slice(initIndex, finalIndex));
       } else {
         document.querySelector('.bottom-observed').style.display = 'block';
@@ -126,36 +136,44 @@ const Home = () => {
     }
   }
 
-  // add top padding to #expander div
-  function shouldGetNewPadding(isBottom) {
-    // calculate initial and final indexes
+  function getNewIndexes(isBottom) {
     if (isBottom) {
-      // since appeding items steps in half the step preppeding does,
-      // check if last move was a preppend
-      initIndex === lastInitIndex.current
-        ? initIndex = finalIndex + initArrLength
-        : initIndex = finalIndex;
-      finalIndex === lastInitIndex.current + initArrLength
-        ? finalIndex = finalIndex + maxArrLength
-        : finalIndex = finalIndex + initArrLength;
-
+      initIndex = finalIndex
+      finalIndex = finalIndex + initArrLength
       nextArr.current = filtered.current.slice(initIndex, finalIndex);
+      // check and toggle last move
+      if (lastMoveWasBottom.current !== isBottom) lastMoveWasBottom.current = isBottom;
     } else {
-      // avoid slicing negative numbers from data array
-      initIndex = initIndex - maxArrLength >= 0 ? initIndex - maxArrLength : 0;
-      finalIndex = finalIndex - maxArrLength >= initArrLength ? finalIndex - maxArrLength : initArrLength;
-      lastInitIndex.current = initIndex;
+      // check last move
+      if (lastMoveWasBottom.current !== isBottom) {
+        // avoid slicing negative numbers from data array
+        initIndex = initIndex - maxArrLength >= 0 ? initIndex - maxArrLength : 0;
+        finalIndex = finalIndex - maxArrLength >= initArrLength ? finalIndex - maxArrLength : initArrLength;
+        // toggle last move
+        lastMoveWasBottom.current = !lastMoveWasBottom.current;
+      } else {
+        initIndex = initIndex - initArrLength >= 0 ? initIndex - initArrLength : 0;
+        finalIndex = finalIndex - initArrLength >= initArrLength ? finalIndex - initArrLength : initArrLength;
+      }
     }
-    
+
+    // call sliceList to render new elements
+    isBottom
+      ? sliceList(nextArr.current, isBottom)
+      : sliceList(filtered.current.slice(initIndex, finalIndex), isBottom) ;
+  }
+
+  function shouldGetNewPadding(isBottom) {
     const numberOfDataRows = document.getElementsByClassName('data-row').length;
 
     // update paddings
     if (numberOfDataRows === maxArrLength) {
       removalCounter.current += 1;
-      // add padding to top element
+      // add padding to expander element
       const currPaddingTop = Number(expander.current.style.paddingTop.split('p')[0]);
       const currPaddingBottom = Number(expander.current.style.paddingBottom.split('p')[0]);
       const newPadding = initArrLength * rowElementHeight;
+
       if (isBottom) {
         expander.current.style.paddingBottom = currPaddingBottom === 0
           ? '0px'
@@ -174,11 +192,7 @@ const Home = () => {
     } else {
       removalCounter.current = 0;
     }
-
-    // finally, call sliceList to render new elements
-    isBottom
-      ? sliceList(nextArr.current, isBottom)
-      : sliceList(filtered.current.slice(initIndex, finalIndex), isBottom) ;
+    getNewIndexes(isBottom);
   }
 
   function bottomCallback(entry) {  
@@ -264,9 +278,10 @@ const Home = () => {
         </Header>
         <Spacer />
         <div id="expander" ref={expander}>
-          {currArr && <div style={{border: "1px solid red"}} className="top-observed" />}
+          {currArr && <div className="top-observed" />}
           {currArr && currArr.map(obj => (
-            <Row key={obj.product.concat(Math.random())} className="data-row">
+            // .concat(Math.random())
+            <Row key={obj.product.concat(obj.price)} className="data-row">
               <TableCell text={obj.product} />
               <TableCell text={obj.quantity} />
               <TableCell text={obj.price} />
@@ -275,7 +290,7 @@ const Home = () => {
               <TableCell text={obj.origin} />
             </Row>
           ))}
-          {currArr && <div style={{border: "1px solid red"}} className="bottom-observed" />}
+          {currArr && <div className="bottom-observed" />}
         </div>
       </>
     ) : (
