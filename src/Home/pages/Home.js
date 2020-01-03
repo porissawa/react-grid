@@ -70,6 +70,7 @@ const Home = () => {
   const removalCounter = useRef(0);
   const filtered = useRef(null);
   const lastMoveWasBottom = useRef(true);
+  const prevInitIndex = useRef(null);
 
   useEffect(() => {
     dispatch(fetchData())
@@ -96,7 +97,6 @@ const Home = () => {
       // guard against pre render call
       expander.current && sliceList(filtered.current, false, true);
     }
-    console.log(filtered.current)
 
     // including sliceList in the dependendy array would require a useCallback
     // which would trigger two functions instead of one, losing performance
@@ -105,7 +105,6 @@ const Home = () => {
 
   useEffect(() => {
     concatedArr.current = currArr;
-    console.log()
   })
 
   function resetPaddings() {
@@ -127,18 +126,19 @@ const Home = () => {
   }
 
   function sliceList(list, isBottom, isFilter) {
+    if (!isBottom && initIndex === prevInitIndex.current && !isFilter) {
+      return;
+    }
+
     const listLength = list.length;
-    console.log('entrou no slicelist')
     if (isFilter) {
       resetPaddings();
       // reset scroll
       window.scrollTo(0, 0);
       if (listLength <= initArrLength) {
-        console.log('listlength era menor que initArrLength')
         removeObservers();
         setCurrArr(list.slice(initIndex, finalIndex));
       } else {
-        console.log('listlength era MAIOR que initArrLength', list.slice(0, initArrLength))
         restoreObservers();
         setCurrArr(list.slice(0, initArrLength));
       }
@@ -147,10 +147,7 @@ const Home = () => {
     }
 
     finalIndex = finalIndex >= listLength ? finalIndex : listLength;
-    console.log('removalCounter.current', removalCounter.current)
-    console.log('concatedArr.current', concatedArr.current)
     if (removalCounter.current === 0 && concatedArr.current && concatedArr.current.length < maxArrLength) {
-      console.log('entrou no arr.concat(list)')
       setCurrArr(arr => arr.concat(list));
     } else if (isBottom && initIndex >= 0) {
       // remove unseen topmost dom elements and append new items
@@ -162,6 +159,8 @@ const Home = () => {
   }
 
   function getNewIndexes(isBottom) {
+    prevInitIndex.current = initIndex;
+    console.log(prevInitIndex)
     if (isBottom) {
       initIndex = finalIndex
       finalIndex = finalIndex + initArrLength
@@ -185,7 +184,7 @@ const Home = () => {
     // call sliceList to render new elements
     isBottom
       ? sliceList(nextArr.current, isBottom)
-      : sliceList(filtered.current.slice(initIndex, finalIndex), isBottom) ;
+      : sliceList(filtered.current.slice(initIndex, finalIndex), isBottom);
   }
 
   function shouldGetNewPadding(isBottom) {
