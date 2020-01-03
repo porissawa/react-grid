@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Row from '../components/Row';
 import TableCell from '../components/TableCell';
 import SearchBar from '../components/SearchBar';
-import { fetchData, setFilter } from '../redux/grid';
+import { fetchData } from '../redux/grid';
 
 // styled components
 const Header = styled.div`
@@ -62,7 +62,6 @@ const Home = () => {
   let bottomSentinelPreviousY = 0;
 
   const [currArr, setCurrArr] = useState([]);
-  const [query, setQuery] = useState('');
 
   const nextArr = useRef(null);
   const concatedArr = useRef(null); // using for debugging
@@ -282,17 +281,7 @@ const Home = () => {
           <HeaderContent>
             <div>
               <SSearchBar
-                onChange={e => setQuery(e.target.value)}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  dispatch(setFilter(query))
-                }}
-                value={query}
                 placeholder="Search for a product or origin"
-                onClear={() => {
-                  setQuery('');
-                  dispatch(setFilter(''))
-                }}
               />
             </div>
             <HeaderRow>
@@ -310,6 +299,7 @@ const Home = () => {
             <Row key={obj.product.concat(obj.price)} className="data-row">
               <TableCell text={obj.product} />
               <TableCell text={obj.quantity} />
+              {console.log('renderizou tabela')}
               <TableCell text={obj.price} />
               <TableCell text={obj.type} />
               <TableCell text={obj.industry} />

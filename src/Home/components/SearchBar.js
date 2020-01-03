@@ -1,8 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
+import { useDispatch, useSelector } from 'react-redux';
 
 // project imports
 import { colors } from '../../utils/styles';
+import { setFilter } from '../redux/grid';
 
 // styled components
 const ContainerBox = styled.form`
@@ -41,29 +43,29 @@ const ClearBtn = styled.button.attrs({
 
 function SearchBar({
   className,
-  onChange,
-  onSubmit,
-  onClear,
   placeholder,
-  value,
 }) {
   const inputEl = useRef(null);
+  const dispatch = useDispatch();
 
-  const submit = e => {
-    onSubmit(e);
-  };
+  const [query, setQuery] = useState('');
 
   return (
-    <ContainerBox className={className} onSubmit={submit}>
+    <ContainerBox
+      className={className}
+      onSubmit={e => {
+        e.preventDefault();
+        dispatch(setFilter(query))}}
+    >
       <SInput
         ref={inputEl}
         type="text"
         placeholder={placeholder}
-        value={value}
-        onChange={onChange}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
       />
-      {value && (
-        <ClearBtn onClick={onClear}>
+      {query && (
+        <ClearBtn onClick={() => setQuery('')}>
           X
         </ClearBtn>
       )}
