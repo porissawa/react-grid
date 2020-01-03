@@ -10,19 +10,20 @@ import { fetchData, setFilter } from '../redux/grid';
 
 // styled components
 const Header = styled.div`
-  /* margin-bottom: 50px; */
-  position: fixed;
   width: 100%;
-  top: 0;
-  left: 0;
-  right: 0;
   background-color: white;
+  position: fixed;
+  top: 0;
+
 `;
 
 const HeaderContent = styled.div`
-  position: relative;
-  margin: 10px auto 0px;
-  width: 100%;
+  position: sticky;
+  margin: 10px auto 0 -10px;
+  width: calc(100% - 16px);
+  top: 0;
+  left: 0;
+  right: 0;
   padding: 0 10px;
 `;
 
@@ -75,7 +76,6 @@ const Home = () => {
   }, [data]);
 
   useEffect(() => {
-    console.log('filter', filter)
     if (filter !== '') {
       filtered.current = data.filter(el => {
         return el.product.toLowerCase().includes(filter.toLowerCase())
@@ -85,7 +85,7 @@ const Home = () => {
       filtered.current = data
     }
     filter && sliceList(filtered.current, false, true);
-  }, [filter, data, sliceList])
+  }, [filter, data])
 
   function resetPaddings() {
     expander.current.style.paddingBottom = '0px';
@@ -188,7 +188,7 @@ const Home = () => {
     if (currentY > bottomSentinelPreviousY && isIntersecting) {
       shouldGetNewPadding(true);
     }
-    console.log('bottomCallback currentY', currentY);
+
     bottomSentinelPreviousY = currentY;
     topSentinelPreviousY = currentY;
   }
@@ -201,7 +201,6 @@ const Home = () => {
       shouldGetNewPadding(false);
     }
 
-    console.log('topCallback currentY', currentY);
     topSentinelPreviousY = currentY;
     bottomSentinelPreviousY = currentY;
   }
@@ -244,7 +243,6 @@ const Home = () => {
             <div>
               <SSearchBar
                 onChange={e => setQuery(e.target.value)}
-                value={query}
                 onSubmit={(e) => {
                   e.preventDefault();
                   dispatch(setFilter(query))
