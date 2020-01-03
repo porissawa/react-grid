@@ -247,8 +247,12 @@ const Home = () => {
                   e.preventDefault();
                   dispatch(setFilter(query))
                 }}
+                value={query}
                 placeholder="Search for a product or origin"
-                onClear={() => setQuery('')}
+                onClear={() => {
+                  setQuery('');
+                  dispatch(setFilter(''))
+                }}
               />
             </div>
             <Row isHeader>
@@ -262,7 +266,7 @@ const Home = () => {
         <div id="expander" ref={expander}>
           {currArr && <div style={{border: "1px solid red"}} className="top-observed" />}
           {currArr && currArr.map(obj => (
-            <Row key={obj.product.concat(obj.price)} className="data-row">
+            <Row key={obj.product.concat(Math.random())} className="data-row">
               <TableCell text={obj.product} />
               <TableCell text={obj.quantity} />
               <TableCell text={obj.price} />
