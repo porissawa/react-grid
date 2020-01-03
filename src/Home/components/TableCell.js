@@ -20,9 +20,9 @@ const Cell = styled.div`
   overflow: hidden;
 `;
 
-function TableCell({className, text, onClick}) {
+function TableCell({className, text, onClick, style}) {
   return (
-    <Cell className={className} onClick={onClick}>
+    <Cell className={className} onClick={onClick} style={style}>
       {text}
     </Cell>
   )

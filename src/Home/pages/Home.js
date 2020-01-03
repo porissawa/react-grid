@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Row from '../components/Row';
 import TableCell from '../components/TableCell';
 import SearchBar from '../components/SearchBar';
+import Loader from '../components/Loader';
 import { fetchData } from '../redux/grid';
 
 // styled components
@@ -44,6 +45,24 @@ const HeaderRow = styled(Row).attrs({
   }
 `;
 
+const MobileHeader = styled(Row)`
+  @media (min-width: 700px) {
+    display: none;
+  }
+`;
+
+const IndustryCell = styled(TableCell)`
+  align-items: baseline;
+`;
+
+const LoadScreen = styled.div`
+  width: 100%;
+  padding-top: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 // render
 
 const Home = () => {
@@ -64,7 +83,7 @@ const Home = () => {
   const [currArr, setCurrArr] = useState([]);
 
   const nextArr = useRef(null);
-  const concatedArr = useRef(null); // using for debugging
+  const concatedArr = useRef(null);
   const expander = useRef(null);
   const removalCounter = useRef(0);
   const filtered = useRef(null);
@@ -159,7 +178,6 @@ const Home = () => {
 
   function getNewIndexes(isBottom) {
     prevInitIndex.current = initIndex;
-    console.log(prevInitIndex)
     if (isBottom) {
       initIndex = finalIndex
       finalIndex = finalIndex + initArrLength
@@ -219,7 +237,6 @@ const Home = () => {
   }
 
   function bottomCallback(entry) {
-    console.log('CHAMOUT BOTTOM CALLBACK');
     const currentY = entry.boundingClientRect.y + window.pageYOffset;
     const isIntersecting = entry.isIntersecting;
     
@@ -232,7 +249,6 @@ const Home = () => {
   }
 
   function topCallback(entry) {
-    console.log('CHAMOUT TOP CALLBACK');
     const currentY = entry.boundingClientRect.y + window.pageYOffset;
     const isIntersecting = entry.isIntersecting;
 
@@ -246,7 +262,7 @@ const Home = () => {
 
   function createIntersectionObserver() {
     let options = {
-      rootMargin: `${rowElementHeight * 3}px`,
+      rootMargin: `${rowElementHeight * 8}px`,
       threshold: 0.5,
     };
 
@@ -294,15 +310,18 @@ const Home = () => {
         <Spacer />
         <div id="expander" ref={expander}>
           {currArr && <div className="top-observed" />}
+          <MobileHeader>
+            {Object.keys(data[0]).map(el => (
+                <TableCell text={el.toUpperCase()} key={el} />
+              ))}
+          </MobileHeader>
           {currArr && currArr.map(obj => (
-            // .concat(Math.random())
             <Row key={obj.product.concat(obj.price)} className="data-row">
               <TableCell text={obj.product} />
               <TableCell text={obj.quantity} />
-              {console.log('renderizou tabela')}
               <TableCell text={obj.price} />
               <TableCell text={obj.type} />
-              <TableCell text={obj.industry} />
+              <IndustryCell text={obj.industry} />
               <TableCell text={obj.origin} />
             </Row>
           ))}
@@ -310,9 +329,9 @@ const Home = () => {
         </div>
       </>
     ) : (
-      <>
-        {null}
-      </>
+      <LoadScreen>
+        <Loader />
+      </LoadScreen>
     )
 }
 
